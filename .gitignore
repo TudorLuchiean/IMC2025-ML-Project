@@ -1,0 +1,29 @@
+# Competition data and anything derived from it
+data/
+*.zip
+
+# Model weights and caches
+weights/
+checkpoints/
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+
+# Pipeline outputs (features, matches, reconstructions)
+outputs/
+*.h5
+*.db
+
+# Python / Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+
+# Credentials
+kaggle.json
+.env

@@ -9,9 +9,17 @@ dependencies:
   - numpy
   - pillow
   - scikit-learn
-  - opencv
   - pandas
   - python=3.12
-  - pytorch=2.5.1
-  - torchvision=0.20.1
-prefix: C:\Users\tudor\miniconda3\envs\IMC2025
+  - pip
+  # torch/torchvision/opencv come from pip: the conda builds link their own glog,
+  # which crashes when imported together with pycolmap's bundled glog
+  - pip:
+      - torch==2.5.1
+      - torchvision==0.20.1
+      - opencv-python
+      - pycolmap
+      - kornia
+      - h5py
+      - kaggle
+      - lightglue @ git+https://github.com/cvg/LightGlue.git
