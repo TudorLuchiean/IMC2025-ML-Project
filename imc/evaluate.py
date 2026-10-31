@@ -78,8 +78,8 @@ def shortlist_report(pairs, images, scene_of):
         'pairs': len(pairs),
         'of_all': len(pairs) / max(1, n * (n - 1) // 2),
         'cross': 1 - len(same) / len(pairs) if pairs else 0.0,
-        'coverage': float(np.mean(coverage)),
-        'worst': min(coverage),
+        'coverage': float(np.mean(coverage)) if coverage else 0.0,
+        'worst': min(coverage, default=0.0),
         'isolated': sum(1 for i in range(n) if scenes[i] != 'outliers' and not linked[i]),
     }
 
