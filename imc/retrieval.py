@@ -1,4 +1,5 @@
 """Global image descriptors (DINOv2) and the candidate pairs chosen from them."""
+import os
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -9,7 +10,9 @@ STD = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
 
 
 def pick_device():
-    """CUDA if available, otherwise CPU (pass torch.device('mps') yourself to try an Apple GPU)."""
+    """Prefer Intel XPU, then CUDA, otherwise CPU. MPS can be selected explicitly."""
+    if hasattr(torch, 'xpu') and torch.xpu.is_available():
+        return torch.device('xpu')
     return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -19,11 +22,15 @@ def load_dinov2(name='dinov2_vits14', device=None, repo=None, weights=None):
     Kaggle submissions run without internet: there, pass a local copy of the
     facebookresearch/dinov2 repo as `repo` and the checkpoint file as `weights`.
     """
+    device = torch.device(device) if device is not None else pick_device()
+    if device.type == 'xpu':
+        # DINOv2's optional xFormers implementation targets CUDA; use PyTorch attention.
+        os.environ['XFORMERS_DISABLED'] = '1'
     model = torch.hub.load(repo or 'facebookresearch/dinov2', name,
                            source='local' if repo else 'github', pretrained=weights is None)
     if weights is not None:
         model.load_state_dict(torch.load(weights, map_location='cpu'))
-    return model.eval().to(device or pick_device())
+    return model.eval().to(device)
 
 
 def load_image(path, max_side=448, patch=14):
@@ -51,13 +58,16 @@ class _Images(torch.utils.data.Dataset):
 def embed_images(paths, model, max_side=448, num_workers=0):
     """L2-normalised global descriptors, one row per image:
     {'cls': class token, 'mac': max-pooled patch tokens}, each an (n, dim) array."""
+    paths = list(paths)
+    if not paths:
+        raise ValueError('embed_images requires at least one image')
     device = next(model.parameters()).device
     loader = torch.utils.data.DataLoader(_Images(paths, max_side), batch_size=None, num_workers=num_workers)
     out = {'cls': [], 'mac': []}
     for x in loader:
         f = model.forward_features(x[None].to(device))
-        out['cls'].append(f['x_norm_clstoken'])
-        out['mac'].append(f['x_norm_patchtokens'].amax(dim=1))
+        out['cls'].append(f['x_norm_clstoken'].cpu())
+        out['mac'].append(f['x_norm_patchtokens'].amax(dim=1).cpu())
     return {k: F.normalize(torch.cat(v), dim=1).cpu().numpy() for k, v in out.items()}
 
 
@@ -69,6 +79,8 @@ def shortlist_pairs(desc, k=20, sim_th=None, exhaustive_below=40):
     `exhaustive_below` are matched exhaustively. No image is left out, so a wrong guess only
     costs matching time: geometric verification and SfM decide which images form a scene.
     """
+    if k < 1:
+        raise ValueError('k must be positive')
     n = len(desc)
     if n < exhaustive_below:
         return [(i, j) for i in range(n) for j in range(i + 1, n)]

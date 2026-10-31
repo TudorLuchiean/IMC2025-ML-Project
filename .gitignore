@@ -1,5 +1,7 @@
 # Competition data and anything derived from it
 data/
+data_debugging/
+.venv/
 *.zip
 
 # Model weights and caches
