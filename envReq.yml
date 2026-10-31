@@ -10,6 +10,7 @@ dependencies:
   - pillow
   - scikit-learn
   - pandas
+  - pytest
   - python=3.12
   - pip
   # torch/torchvision/opencv come from pip: the conda builds link their own glog,
