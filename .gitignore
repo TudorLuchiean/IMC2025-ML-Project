@@ -1,5 +1,7 @@
 # Competition data and anything derived from it
 data/
+data_debugging/
+.venv/
 *.zip
 
 # Model weights and caches
@@ -19,6 +21,7 @@ outputs/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+.pytest_cache/
 
 # OS / editors
 .DS_Store

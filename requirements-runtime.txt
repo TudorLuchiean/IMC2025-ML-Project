@@ -1,0 +1,18 @@
+# Install into an environment that already has the appropriate torch/torchvision
+# backend (Intel XPU or NVIDIA CUDA). Do not use envReq.yml to replace that build.
+numpy
+pandas
+scipy
+pillow
+scikit-learn
+matplotlib
+networkx
+opencv-python
+pycolmap
+kornia
+h5py
+tqdm
+kaggle
+pytest
+ipykernel
+lightglue @ git+https://github.com/cvg/LightGlue.git
